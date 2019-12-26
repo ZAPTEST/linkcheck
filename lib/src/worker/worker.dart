@@ -146,7 +146,7 @@ Future<FetchResults> checkPage(
   String content;
   try {
     Converter<List<int>, String> decoder;
-    if (current.contentType.charset == latin1.name) {
+    if (current.contentType != null && current.contentType.charset == latin1.name) {
       // Some sites still use LATIN-1 for performance reasons.
       decoder = latin1.decoder;
     } else {
