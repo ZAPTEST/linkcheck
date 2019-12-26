@@ -212,8 +212,8 @@ void worker(SendPort port) {
   });
 }
 
-const connectionTimeout = Duration(seconds: 5);
-const responseTimeout = Duration(seconds: 5);
+const connectionTimeout = Duration(seconds: 60);
+const responseTimeout = Duration(seconds: 60);
 final fetchTimeout = connectionTimeout + responseTimeout;
 
 /// Fetches the given [uri] by HTTP GET and returns a [HttpClientResponse].
