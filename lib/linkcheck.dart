@@ -10,6 +10,7 @@ import 'package:linkcheck/src/parsers/url_skipper.dart';
 import 'src/crawl.dart' show crawl, CrawlResult;
 import 'src/link.dart' show Link;
 import 'src/writer_report.dart' show reportForWriters;
+import 'src/writer_report.dart' show reportToFiles;
 
 export 'src/crawl.dart' show crawl, CrawlResult;
 export 'src/destination.dart' show Destination;
@@ -26,9 +27,12 @@ const helpFlag = "help";
 const hostsFlag = "hosts";
 const inputFlag = "input-file";
 const skipFlag = "skip-file";
+const outputFlag = "output";
 const version = "2.0.12";
 const versionFlag = "version";
 final _portOnlyRegExp = RegExp(r"^:\d+$");
+
+String outputFolder = "";
 
 void printStats(CrawlResult result, int broken, int withWarning, int withInfo,
     bool ansiTerm, Stdout stdout) {
@@ -130,7 +134,11 @@ void printStats(CrawlResult result, int broken, int withWarning, int withInfo,
     print("${checked.toString().padLeft(8)} destination URLs");
     print("${ignored.toString().padLeft(8)} URLs ignored");
     print("${withWarning.toString().padLeft(8)} warnings");
-    print("${broken.toString().padLeft(8)} errors");
+    print("${broken.toString().padLeft(8)} errors");      
+  }
+
+  if (outputFolder != null) {
+    reportToFiles(outputFolder, result);
   }
 }
 
@@ -158,6 +166,8 @@ Future<int> run(List<String> arguments, Stdout stdout) async {
     ..addOption(skipFlag,
         help: "Get list of URLs to skip from given text file (one RegExp "
             "pattern per line).")
+    ..addOption(outputFlag,
+        help: "Sets the output directory where tool put all results.")
     ..addMultiOption(hostsFlag,
         splitCommas: true,
         help: "Paths to check. By default, the crawler "
@@ -195,6 +205,7 @@ Future<int> run(List<String> arguments, Stdout stdout) async {
   bool shouldCheckExternal = argResults[externalFlag];
   String inputFile = argResults[inputFlag];
   String skipFile = argResults[skipFlag];
+  outputFolder = argResults[outputFlag];
 
   List<String> urls = argResults.rest.toList();
   UrlSkipper skipper = UrlSkipper.empty();

@@ -1,6 +1,7 @@
 library linkcheck.writer_report;
 
 import 'dart:io' show Stdout;
+import 'dart:io' hide Link;
 import 'dart:math' show min;
 
 import 'package:console/console.dart';
@@ -8,6 +9,131 @@ import 'package:console/console.dart';
 import 'crawl.dart' show CrawlResult;
 import 'link.dart';
 import 'destination.dart';
+
+void reportToFiles(String outputFolder, CrawlResult result) {
+  // Checked URLs
+  List<Destination> checkedUrls = result.destinations
+      .where((destination) => !destination.wasDeniedByRobotsTxt && !destination.isUnsupportedScheme).toList(growable: false);
+
+  var linksFile = File(outputFolder + '\\links.txt').openWrite();
+  var lastOriginUri = "";
+  for (var link in result.links) {
+    var originUri = link.origin.uri.toString();
+    var destinationUri = link.destination.uri.toString();
+    if (lastOriginUri != originUri) {
+      linksFile.write("- ${originUri}\r\n");
+      lastOriginUri = originUri;
+    }
+    linksFile.write("= ${destinationUri}\r\n");
+    if (link.destination.redirects != null) {
+      for (var redirect in link.destination.redirects) {
+        linksFile.write("> ${redirect.url}\r\n");
+      }
+    }
+  }
+  linksFile.close();
+
+  var checkedUrlsFile = File(outputFolder + '\\checked.txt').openWrite();
+  for (var checkedUrl in checkedUrls) {
+    checkedUrlsFile.write("- ${checkedUrl.url}\r\n");
+  }
+  checkedUrlsFile.close();
+
+  // Ignored by ROBOT URLs
+  List<Destination> deniedByRobotsUrls = result.destinations
+      .where((destination) => destination.wasDeniedByRobotsTxt)
+      .toList(growable: false);
+  deniedByRobotsUrls.sort((a, b) => a.url.compareTo(b.url));
+
+  var deniedByRobotsFile = File(outputFolder + '\\denied_by_tobots.txt').openWrite();
+  for (var deniedByRobotsUrl in deniedByRobotsUrls) {
+    deniedByRobotsFile.write("- ${deniedByRobotsUrl.url}\r\n");
+  }
+  deniedByRobotsFile.close();
+
+  // Broken and Warning URLs
+  Set<Link> links = result.links;
+  List<Link> brokenAndWarningLinks = links
+      .where((link) =>
+          !link.destination.isUnsupportedScheme &&
+          !link.wasSkipped &&
+          (link.destination.isInvalid ||
+              link.destination.wasTried &&
+                  (link.destination.isBroken || link.hasWarning)))
+      .toList(growable: false);
+
+  List<Uri> sourceBrokenAndWarningUris =
+    brokenAndWarningLinks.map((link) => link.origin.uri).toSet().toList(growable: false);
+  sourceBrokenAndWarningUris.sort((a, b) => a.toString().compareTo(b.toString()));
+  
+  var brokenAndWarningUrlsFile = File(outputFolder + '\\broken_warning.txt').openWrite();
+  for (var uri in sourceBrokenAndWarningUris) {
+      generateFileData(brokenAndWarningUrlsFile, uri, brokenAndWarningLinks, false);
+  }
+  brokenAndWarningUrlsFile.close();
+
+  // Error URLs
+  List<Link> brokenLinks = links
+      .where((link) =>
+          !link.destination.isUnsupportedScheme &&
+          !link.wasSkipped &&
+          (link.destination.isInvalid ||
+              link.destination.wasTried &&
+                  (link.destination.isBroken)))
+      .toList(growable: false);
+
+  List<Uri> sourceBrokenUris =
+    brokenLinks.map((link) => link.origin.uri).toSet().toList(growable: false);
+  sourceBrokenUris.sort((a, b) => a.toString().compareTo(b.toString()));
+  
+  var brokenUrlsFile = File(outputFolder + '\\broken.txt').openWrite();
+  for (var uri in sourceBrokenUris) {
+      generateFileData(brokenUrlsFile, uri, brokenLinks, false);
+  }
+  brokenUrlsFile.close();
+
+  // Warning URLs
+  List<Link> warningLinks = links
+      .where((link) =>
+          !link.destination.isUnsupportedScheme &&
+          !link.wasSkipped && 
+          link.destination.wasTried &&
+          link.hasWarning && !link.hasError)
+      .toList(growable: false);
+
+  List<Uri> sourceWarningUris =
+    warningLinks.map((link) => link.origin.uri).toSet().toList(growable: false);
+  sourceWarningUris.sort((a, b) => a.toString().compareTo(b.toString()));
+  
+  var warningUrlsFile = File(outputFolder + '\\warning.txt').openWrite();
+  for (var uri in sourceWarningUris) {
+      generateFileData(warningUrlsFile, uri, warningLinks, true);
+  }
+  warningUrlsFile.close();
+}
+
+void generateFileData(IOSink file, Uri uri, List<Link> broken, bool warningOnly) {
+    file.write("${uri.toString()}\r\n");
+    var links = broken.where((link) => link.origin.uri == uri);
+    for (var link in links) {
+      if (warningOnly && !link.hasError || !warningOnly) {
+        String tag = _buildTagSummary(link);
+      
+        file.write("--\r\n");
+        file.write("- ${link.origin.span.start.line + 1}\r\n");
+        file.write("- ${link.origin.span.start.column}\r\n");
+        file.write("- ${tag}\r\n");
+        file.write("- ${link.destination.url}");
+          file.write(link.fragment == null ? "" : '#${link.fragment}');
+        file.write("\r\n- " + (link.hasError ? "error" : "warning"));
+        file.write("\r\n- " + link.destination.statusDescription);
+        file.write(!link.hasError && link.breaksAnchor ? " but missing anchor" : "");
+        file.write("\r\n"); 
+      }
+    }
+    file.write("\r\n");
+    file.write("\r\n");
+}
 
 /// Writes the reports from the perspective of a website writer - which pages
 /// reference broken links.
