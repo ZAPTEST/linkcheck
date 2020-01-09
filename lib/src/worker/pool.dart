@@ -12,8 +12,8 @@ class Pool {
   ///
   /// This should give it enough time for the HttpClient [fetchTimeout]
   /// plus buffer for actual Dart code.
-  static final workerTimeout = fetchTimeout + const Duration(milliseconds: 500);
-  static const healthCheckFrequency = Duration(seconds: 1);
+  static final workerTimeout = fetchTimeout + const Duration(milliseconds: 2500);
+  static const healthCheckFrequency = Duration(seconds: 2);
 
   /// The number of threads.
   final int count;
