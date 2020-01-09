@@ -180,12 +180,15 @@ Future<CrawlResult> crawl(
       if (server.bouncer != null &&
           !server.bouncer.allows(destination.uri.path)) {
         destination.wasDeniedByRobotsTxt = true;
-        closed.add(destination);
-        bin[destination.url] = Bin.closed;
-        if (verbose) {
-          print("Skipping $destination because of robots.txt at $host.");
+
+        if (!canIgnoreRobotsFile) {
+          closed.add(destination);
+          bin[destination.url] = Bin.closed;
+          if (verbose) {
+            print("Skipping $destination because of robots.txt at $host.");
+          }
+          continue;
         }
-        continue;
       }
 
       var delay = server.getThrottlingDuration();

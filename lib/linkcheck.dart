@@ -29,12 +29,14 @@ const inputFlag = "input-file";
 const skipFlag = "skip-file";
 const outputFlag = "output";
 const threadsFlag = "threads";
+const ignoreRobotsFileFlag = "ignore-robots-file";
 const version = "2.0.12";
 const versionFlag = "version";
 final _portOnlyRegExp = RegExp(r"^:\d+$");
 
 String outputFolder = "";
 int maxThreads = 2;
+bool canIgnoreRobotsFile = false;
 
 void printStats(CrawlResult result, int broken, int withWarning, int withInfo,
     bool ansiTerm, Stdout stdout) {
@@ -170,6 +172,10 @@ Future<int> run(List<String> arguments, Stdout stdout) async {
             "pattern per line).")
     ..addOption(outputFlag,
         help: "Sets the output directory where tool put all results.")
+    ..addFlag(ignoreRobotsFileFlag, 
+        abbr: 'r', 
+        negatable: false,
+        help: "If sets, ignores robots.txt settings.")
     ..addOption(threadsFlag,
         help: "Sets the maximum count of worker threads.")
     ..addMultiOption(hostsFlag,
@@ -210,7 +216,10 @@ Future<int> run(List<String> arguments, Stdout stdout) async {
   String inputFile = argResults[inputFlag];
   String skipFile = argResults[skipFlag];
   outputFolder = argResults[outputFlag];
-  maxThreads = argResults[threadsFlag];
+  if (argResults[threadsFlag] != null) {
+    maxThreads = int.parse(argResults[threadsFlag]);
+  }
+  canIgnoreRobotsFile = argResults[ignoreRobotsFileFlag];
 
   List<String> urls = argResults.rest.toList();
   UrlSkipper skipper = UrlSkipper.empty();
