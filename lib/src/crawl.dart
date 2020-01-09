@@ -5,6 +5,7 @@ import 'dart:collection';
 import 'dart:io' show Stdout;
 
 import 'package:console/console.dart';
+import 'package:linkcheck/linkcheck.dart';
 
 import 'destination.dart';
 import 'link.dart';
@@ -15,10 +16,10 @@ import 'worker/pool.dart';
 import 'worker/fetch_results.dart';
 
 /// Number of isolates to create by default.
-const defaultThreads = 8;
+//const defaultThreads = 8;
 
 /// Number of isolates to create when all we check are localhost sources.
-const localhostOnlyThreads = 4;
+//const localhostOnlyThreads = 4;
 
 /// Specifies where a URI (without fragment) can be found. Used by a hashmap
 /// in [crawl].
@@ -95,9 +96,9 @@ Future<CrawlResult> crawl(
   if (shouldCheckExternal ||
       seeds.any(
           (seed) => seed.host != 'localhost' && seed.host != '127.0.0.1')) {
-    threads = defaultThreads;
+    threads = maxThreads;
   } else {
-    threads = localhostOnlyThreads;
+    threads = maxThreads;
   }
   if (verbose) print("Using $threads threads.");
 

@@ -28,11 +28,13 @@ const hostsFlag = "hosts";
 const inputFlag = "input-file";
 const skipFlag = "skip-file";
 const outputFlag = "output";
+const threadsFlag = "threads";
 const version = "2.0.12";
 const versionFlag = "version";
 final _portOnlyRegExp = RegExp(r"^:\d+$");
 
 String outputFolder = "";
+int maxThreads = 2;
 
 void printStats(CrawlResult result, int broken, int withWarning, int withInfo,
     bool ansiTerm, Stdout stdout) {
@@ -168,6 +170,8 @@ Future<int> run(List<String> arguments, Stdout stdout) async {
             "pattern per line).")
     ..addOption(outputFlag,
         help: "Sets the output directory where tool put all results.")
+    ..addOption(threadsFlag,
+        help: "Sets the maximum count of worker threads.")
     ..addMultiOption(hostsFlag,
         splitCommas: true,
         help: "Paths to check. By default, the crawler "
@@ -206,6 +210,7 @@ Future<int> run(List<String> arguments, Stdout stdout) async {
   String inputFile = argResults[inputFlag];
   String skipFile = argResults[skipFlag];
   outputFolder = argResults[outputFlag];
+  maxThreads = argResults[threadsFlag];
 
   List<String> urls = argResults.rest.toList();
   UrlSkipper skipper = UrlSkipper.empty();
