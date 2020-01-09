@@ -246,6 +246,7 @@ Future<CrawlResult> crawl(
         cursor.write(count.toString());
       } else {
         count += 1;
+        print("processed: " + count.toString());
       }
     }
 
@@ -274,6 +275,7 @@ Future<CrawlResult> crawl(
         cursor.write(count.toString());
       } else {
         count += 1;
+        print("processed: " + count.toString());
       }
     }
 
