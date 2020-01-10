@@ -2,7 +2,8 @@ library linkcheck.crawl;
 
 import 'dart:async';
 import 'dart:collection';
-import 'dart:io' show Stdout;
+import 'dart:convert';
+import 'dart:io' show Stdout, stdin;
 
 import 'package:console/console.dart';
 import 'package:linkcheck/linkcheck.dart';
@@ -137,6 +138,19 @@ Future<CrawlResult> crawl(
     allDone.complete();
     await stopSignalSubscription.cancel();
   });
+
+  var stdInSubscription;
+  stdInSubscription = stdin.listen((List<int> data) async {
+      // Translate character codes into a string.
+      var str = ascii.decode(data);
+      if (str.contains("exit")) {
+        print("\nEXIT cmd: Terminating crawl");
+        await pool.close();
+        allDone.complete();
+        await stdInSubscription.cancel();
+      }
+  });
+  
 
   /// Creates new jobs and sends them to the Pool of Workers, if able.
   void sendNewJobs() {
@@ -408,6 +422,7 @@ Future<CrawlResult> crawl(
   }
 
   await stopSignalSubscription.cancel();
+  await stdInSubscription.cancel();
 
   if (verbose) {
     print("Deduping destinations");

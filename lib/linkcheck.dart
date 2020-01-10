@@ -303,6 +303,7 @@ Future<int> run(List<String> arguments, Stdout stdout) async {
     printStats(result, broken, withWarning, withInfo, ansiTerm, stdout);
   }
   print("");
+  print("=== exited ===\n");
 
   if (broken > 0) return 2;
   if (withWarning > 0) return 1;
