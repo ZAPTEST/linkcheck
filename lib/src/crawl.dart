@@ -191,11 +191,10 @@ Future<CrawlResult> crawl(
         continue;
       }
 
-      if (server.bouncer != null &&
-          !server.bouncer.allows(destination.uri.path)) {
-        destination.wasDeniedByRobotsTxt = true;
-
+      if (server.bouncer != null && !server.bouncer.allows(destination.uri.path)) {
         if (!canIgnoreRobotsFile) {
+          destination.wasDeniedByRobotsTxt = true;
+          
           closed.add(destination);
           bin[destination.url] = Bin.closed;
           if (verbose) {

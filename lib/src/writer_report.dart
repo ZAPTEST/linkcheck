@@ -13,7 +13,7 @@ import 'destination.dart';
 void reportToFiles(String outputFolder, CrawlResult result) {
   // Checked URLs
   List<Destination> checkedUrls = result.destinations
-      .where((destination) => !destination.wasDeniedByRobotsTxt && !destination.isUnsupportedScheme).toList(growable: false);
+      .where((destination) => !(destination.isExternal && !destination.wasTried) && !destination.wasDeniedByRobotsTxt && !destination.isUnsupportedScheme).toList(growable: false);
 
   var linksFile = File(outputFolder + '\\links.txt').openWrite();
   var lastOriginUri = "";
@@ -40,16 +40,18 @@ void reportToFiles(String outputFolder, CrawlResult result) {
   checkedUrlsFile.close();
 
   // Ignored by ROBOT URLs
-  List<Destination> deniedByRobotsUrls = result.destinations
-      .where((destination) => destination.wasDeniedByRobotsTxt)
-      .toList(growable: false);
-  deniedByRobotsUrls.sort((a, b) => a.url.compareTo(b.url));
+  List<Destination> ignoredUrls = result.destinations.where((destination) =>
+        destination.wasDeniedByRobotsTxt ||
+        destination.isUnsupportedScheme ||
+        (destination.isExternal && !destination.wasTried))
+     .toList(growable: false);
+  ignoredUrls.sort((a, b) => a.url.compareTo(b.url));
 
-  var deniedByRobotsFile = File(outputFolder + '\\denied_by_tobots.txt').openWrite();
-  for (var deniedByRobotsUrl in deniedByRobotsUrls) {
-    deniedByRobotsFile.write("- ${deniedByRobotsUrl.url}\r\n");
+  var ignoredUrlsFile = File(outputFolder + '\\ignored.txt').openWrite();
+  for (var deniedByRobotsUrl in ignoredUrls) {
+    ignoredUrlsFile.write("- ${deniedByRobotsUrl.url}\r\n");
   }
-  deniedByRobotsFile.close();
+  ignoredUrlsFile.close();
 
   // Broken and Warning URLs
   Set<Link> links = result.links;
