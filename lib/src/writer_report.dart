@@ -40,16 +40,23 @@ void reportToFiles(String outputFolder, CrawlResult result) {
   checkedUrlsFile.close();
 
   // Ignored by ROBOT URLs
-  List<Destination> ignoredUrls = result.destinations.where((destination) =>
+  List<String> ignoredUrls = result.destinations.where((destination) =>
         destination.wasDeniedByRobotsTxt ||
         destination.isUnsupportedScheme ||
         (destination.isExternal && !destination.wasTried))
-     .toList(growable: false);
-  ignoredUrls.sort((a, b) => a.url.compareTo(b.url));
+      .map((destination) => destination.url)
+      .toList();
+
+  List<String> ignoredLinkUrls = result.links.where((link) => link.wasSkipped)
+    .map((link) => link.destination.uri.toString())
+    .toList(growable: false);
+
+  ignoredUrls.addAll(ignoredLinkUrls);
+  ignoredUrls.sort((a, b) => a.compareTo(b));
 
   var ignoredUrlsFile = File(outputFolder + '\\ignored.txt').openWrite();
-  for (var deniedByRobotsUrl in ignoredUrls) {
-    ignoredUrlsFile.write("- ${deniedByRobotsUrl.url}\r\n");
+  for (var url in ignoredUrls) {
+    ignoredUrlsFile.write("- ${url}\r\n");
   }
   ignoredUrlsFile.close();
 
